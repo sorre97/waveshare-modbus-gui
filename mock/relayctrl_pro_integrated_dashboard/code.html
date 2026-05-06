@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>RelayCtrl Pro Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-primary": "#003919",
+                      "on-primary-fixed-variant": "#005227",
+                      "surface-container-high": "#222a3d",
+                      "outline-variant": "#3d4a3e",
+                      "on-secondary": "#3c0091",
+                      "outline": "#869486",
+                      "surface": "#0b1326",
+                      "on-surface": "#dae2fd",
+                      "on-primary-fixed": "#00210c",
+                      "error-container": "#93000a",
+                      "surface-variant": "#2d3449",
+                      "on-error-container": "#ffdad6",
+                      "surface-tint": "#4de082",
+                      "secondary-fixed-dim": "#d0bcff",
+                      "on-tertiary-fixed": "#001a42",
+                      "surface-dim": "#0b1326",
+                      "on-tertiary-fixed-variant": "#004395",
+                      "on-secondary-fixed-variant": "#5516be",
+                      "on-secondary-container": "#c4abff",
+                      "primary": "#6bfb9a",
+                      "on-primary-container": "#005e2d",
+                      "secondary-container": "#571bc1",
+                      "primary-fixed-dim": "#4de082",
+                      "tertiary-fixed": "#d8e2ff",
+                      "inverse-surface": "#dae2fd",
+                      "tertiary-container": "#aac4ff",
+                      "secondary": "#d0bcff",
+                      "on-tertiary": "#002e6a",
+                      "error": "#ffb4ab",
+                      "on-background": "#dae2fd",
+                      "on-error": "#690005",
+                      "surface-container-low": "#131b2e",
+                      "surface-bright": "#31394d",
+                      "on-secondary-fixed": "#23005c",
+                      "tertiary-fixed-dim": "#adc6ff",
+                      "surface-container-lowest": "#060e20",
+                      "surface-container": "#171f33",
+                      "background": "#0b1326",
+                      "surface-container-highest": "#2d3449",
+                      "inverse-on-surface": "#283044",
+                      "on-surface-variant": "#bccabb",
+                      "secondary-fixed": "#e9ddff",
+                      "primary-fixed": "#6dfe9c",
+                      "tertiary": "#d5e0ff",
+                      "inverse-primary": "#006d36",
+                      "primary-container": "#4ade80",
+                      "on-tertiary-container": "#004da8"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "sm": "12px",
+                      "md": "24px",
+                      "base": "8px",
+                      "container-padding": "24px",
+                      "xl": "64px",
+                      "grid-gutter": "20px",
+                      "xs": "4px",
+                      "lg": "40px"
+              },
+              "fontFamily": {
+                      "display": [
+                              "Inter"
+                      ],
+                      "h1": [
+                              "Inter"
+                      ],
+                      "numeric": [
+                              "Space Grotesk"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "label-caps": [
+                              "Space Grotesk"
+                      ],
+                      "h2": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "display": [
+                              "48px",
+                              {
+                                      "lineHeight": "1.1",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "h1": [
+                              "32px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "numeric": [
+                              "20px",
+                              {
+                                      "lineHeight": "1",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "1.6",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "1.6",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "1",
+                                      "letterSpacing": "0.1em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "h2": [
+                              "24px",
+                              {
+                                      "lineHeight": "1.3",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+          /* High-Tech Noir Background & Grid */
+          body {
+              background-color: #050505;
+              background-image: 
+                  linear-gradient(to right, rgba(255,255,255,0.02) 1px, transparent 1px),
+                  linear-gradient(to bottom, rgba(255,255,255,0.02) 1px, transparent 1px);
+              background-size: 32px 32px;
+              position: relative;
+          }
+          
+          /* Background Glows */
+          body::before {
+              content: '';
+              position: fixed;
+              top: -200px;
+              right: -200px;
+              width: 600px;
+              height: 600px;
+              background: radial-gradient(circle, rgba(87, 27, 193, 0.15) 0%, transparent 70%);
+              border-radius: 50%;
+              pointer-events: none;
+              z-index: -1;
+          }
+          body::after {
+              content: '';
+              position: fixed;
+              bottom: -200px;
+              left: -200px;
+              width: 800px;
+              height: 800px;
+              background: radial-gradient(circle, rgba(107, 251, 154, 0.05) 0%, transparent 70%);
+              border-radius: 50%;
+              pointer-events: none;
+              z-index: -1;
+          }
+
+          /* Glassmorphism Classes */
+          .glass-panel {
+              background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
+              backdrop-filter: blur(24px);
+              -webkit-backdrop-filter: blur(24px);
+              border: 1px solid rgba(255, 255, 255, 0.1);
+              border-top: 1px solid rgba(255, 255, 255, 0.2);
+              border-left: 1px solid rgba(255, 255, 255, 0.15);
+              box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+          }
+
+          /* Active/Neon Glows */
+          .neon-glow-active {
+              box-shadow: 0 0 24px rgba(74, 222, 128, 0.2), 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+              border-color: rgba(74, 222, 128, 0.4);
+              background: linear-gradient(135deg, rgba(74, 222, 128, 0.08) 0%, rgba(255, 255, 255, 0.01) 100%);
+          }
+          .neon-text-active {
+              text-shadow: 0 0 10px rgba(74, 222, 128, 0.6);
+          }
+          
+          /* Custom Scrollbar for side nav if needed */
+          ::-webkit-scrollbar {
+              width: 6px;
+          }
+          ::-webkit-scrollbar-track {
+              background: transparent;
+          }
+          ::-webkit-scrollbar-thumb {
+              background: rgba(255,255,255,0.1);
+              border-radius: 10px;
+          }
+      </style>
+</head>
+<body class="text-on-surface antialiased min-h-screen flex flex-col md:flex-row overflow-x-hidden">
+<!-- TopNavBar (Mobile mainly, or contextual header) -->
+<header class="bg-[#050505]/80 backdrop-blur-xl flex justify-between items-center px-md py-sm w-full sticky top-0 z-50 border-b border-white/10 md:hidden">
+<div class="font-display text-h2 font-bold text-primary tracking-tight">
+            RelayCtrl Pro
+        </div>
+<div class="flex gap-sm">
+<button class="text-on-surface-variant hover:text-primary transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined">account_tree</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined">sensors</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined">settings_input_component</span>
+</button>
+</div>
+</header>
+<!-- SideNavBar (Desktop) -->
+<nav class="hidden md:flex flex-col bg-[#050505]/90 backdrop-blur-2xl border-r border-white/10 fixed left-0 top-0 h-screen w-[280px] z-40 transition-all duration-300 ease-in-out pt-xl">
+<!-- Header area within SideNav (as per JSON instructions to use SideNavBar header info) -->
+<div class="px-md pb-md mb-md border-b border-white/5">
+<div class="font-display text-h2 font-bold text-primary mb-xs">
+                RelayCtrl Pro
+            </div>
+<div class="font-display text-body-md font-semibold text-on-surface">
+                Controller Node 01
+            </div>
+<div class="font-display text-body-sm text-on-surface-variant">
+                192.168.1.15
+            </div>
+</div>
+<div class="flex-1 overflow-y-auto py-sm">
+<!-- Active Tab -->
+<a class="flex items-center gap-sm bg-primary/10 text-primary border-r-2 border-primary px-md py-sm hover:bg-surface-variant/50 transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="font-display text-body-md font-medium">Dashboard</span>
+</a>
+<!-- Inactive Tabs -->
+<a class="flex items-center gap-sm text-on-surface-variant px-md py-sm hover:bg-surface-variant/50 hover:text-on-surface transition-colors mt-xs" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-display text-body-md">Settings</span>
+</a>
+</div>
+<div class="border-t border-white/5 py-sm">
+<a class="flex items-center gap-sm text-on-surface-variant px-md py-sm hover:bg-surface-variant/50 hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="font-display text-body-md">Support</span>
+</a>
+<a class="flex items-center gap-sm text-on-surface-variant px-md py-sm hover:bg-surface-variant/50 hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="font-display text-body-md">Documentation</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 p-container-padding md:ml-[280px] w-full min-h-screen">
+<!-- Desktop Contextual Header / Title Area -->
+<div class="hidden md:flex justify-between items-end mb-xl border-b border-white/5 pb-md">
+<div>
+<h1 class="font-display text-display text-on-surface mb-xs">Control Matrix</h1>
+<p class="font-display text-body-lg text-on-surface-variant">Manage 8-Channel Modbus Interface</p>
+</div>
+<div class="flex items-center gap-md">
+<!-- System Status Badge -->
+<div class="flex items-center gap-xs px-sm py-[6px] rounded-full bg-primary/10 border border-primary/30">
+<div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+<span class="font-label-caps text-label-caps text-primary tracking-widest uppercase">SYS_ONLINE</span>
+</div>
+<!-- Top Nav Actions moved here for desktop layout -->
+<div class="flex gap-sm">
+<button class="p-xs rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-variant/50 transition-colors">
+<span class="material-symbols-outlined">account_tree</span>
+</button>
+<button class="p-xs rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-variant/50 transition-colors">
+<span class="material-symbols-outlined">sensors</span>
+</button>
+<button class="p-xs rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-variant/50 transition-colors">
+<span class="material-symbols-outlined">settings_input_component</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Mobile Title Area -->
+<div class="md:hidden mb-lg">
+<div class="flex justify-between items-center mb-sm">
+<h1 class="font-display text-h1 text-on-surface">Control Matrix</h1>
+</div>
+<div class="flex items-center gap-xs px-sm py-[6px] rounded-full bg-primary/10 border border-primary/30 w-max">
+<div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+<span class="font-label-caps text-label-caps text-primary tracking-widest uppercase">SYS_ONLINE</span>
+</div>
+</div>
+<!-- Relay Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-grid-gutter">
+<!-- Relay 01 - ACTIVE -->
+<div class="glass-panel rounded-xl p-md flex flex-col justify-between h-[200px] neon-glow-active transition-all duration-300 relative overflow-hidden group">
+<!-- Circuit Overlay subtle detail -->
+<svg class="absolute top-0 right-0 opacity-[0.03] text-primary w-24 h-24 pointer-events-none" fill="currentColor" viewbox="0 0 100 100">
+<path d="M0,0 L100,0 L100,100 Z" fill="none" stroke="currentColor" stroke-width="1"></path>
+<circle cx="80" cy="20" r="3"></circle>
+<circle cx="60" cy="40" r="3"></circle>
+<line stroke="currentColor" stroke-width="1" x1="80" x2="60" y1="20" y2="40"></line>
+</svg>
+<div class="flex justify-between items-start relative z-10">
+<div>
+<h2 class="font-numeric text-numeric text-on-surface mb-xs font-semibold">Relay 01</h2>
+<span class="font-label-caps text-label-caps text-primary uppercase tracking-wider block">Active</span>
+</div>
+<span class="material-symbols-outlined text-primary text-[28px]" style="font-variation-settings: 'FILL' 1;">power</span>
+</div>
+<div class="flex justify-between items-end relative z-10">
+<div class="font-display text-body-sm text-on-surface-variant/70">Load: 2.4A</div>
+<!-- Glowing Toggle (Active) -->
+<button class="w-[64px] h-[32px] rounded-full bg-primary/20 p-1 flex items-center justify-end transition-all duration-300 cursor-pointer border border-primary/40 focus:outline-none">
+<div class="w-[24px] h-[24px] bg-primary rounded-full shadow-[0_0_10px_rgba(74,222,128,0.8)]"></div>
+</button>
+</div>
+</div>
+<!-- Relay 02 - STANDBY -->
+<div class="glass-panel rounded-xl p-md flex flex-col justify-between h-[200px] transition-all duration-300 relative overflow-hidden group hover:border-white/10">
+<div class="flex justify-between items-start relative z-10">
+<div>
+<h2 class="font-numeric text-numeric text-on-surface mb-xs font-semibold">Relay 02</h2>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider block">Standby</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant text-[28px]">power_off</span>
+</div>
+<div class="flex justify-between items-end relative z-10">
+<div class="font-display text-body-sm text-on-surface-variant/50">Load: 0.0A</div>
+<!-- Dim Toggle (Inactive) -->
+<button class="w-[64px] h-[32px] rounded-full bg-surface-container-highest p-1 flex items-center justify-start transition-all duration-300 cursor-pointer border border-white/5 focus:outline-none hover:bg-surface-variant">
+<div class="w-[24px] h-[24px] bg-outline rounded-full"></div>
+</button>
+</div>
+</div>
+<!-- Relay 03 - STANDBY -->
+<div class="glass-panel rounded-xl p-md flex flex-col justify-between h-[200px] transition-all duration-300 relative overflow-hidden group hover:border-white/10">
+<div class="flex justify-between items-start relative z-10">
+<div>
+<h2 class="font-numeric text-numeric text-on-surface mb-xs font-semibold">Relay 03</h2>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider block">Standby</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant text-[28px]">power_off</span>
+</div>
+<div class="flex justify-between items-end relative z-10">
+<div class="font-display text-body-sm text-on-surface-variant/50">Load: 0.0A</div>
+<button class="w-[64px] h-[32px] rounded-full bg-surface-container-highest p-1 flex items-center justify-start transition-all duration-300 cursor-pointer border border-white/5 focus:outline-none hover:bg-surface-variant">
+<div class="w-[24px] h-[24px] bg-outline rounded-full"></div>
+</button>
+</div>
+</div>
+<!-- Relay 04 - ACTIVE -->
+<div class="glass-panel rounded-xl p-md flex flex-col justify-between h-[200px] neon-glow-active transition-all duration-300 relative overflow-hidden group">
+<svg class="absolute top-0 right-0 opacity-[0.03] text-primary w-24 h-24 pointer-events-none" fill="currentColor" viewbox="0 0 100 100">
+<path d="M0,0 L100,0 L100,100 Z" fill="none" stroke="currentColor" stroke-width="1"></path>
+<circle cx="80" cy="20" r="3"></circle>
+<circle cx="60" cy="40" r="3"></circle>
+<line stroke="currentColor" stroke-width="1" x1="80" x2="60" y1="20" y2="40"></line>
+</svg>
+<div class="flex justify-between items-start relative z-10">
+<div>
+<h2 class="font-numeric text-numeric text-on-surface mb-xs font-semibold">Relay 04</h2>
+<span class="font-label-caps text-label-caps text-primary uppercase tracking-wider block">Active</span>
+</div>
+<span class="material-symbols-outlined text-primary text-[28px]" style="font-variation-settings: 'FILL' 1;">power</span>
+</div>
+<div class="flex justify-between items-end relative z-10">
+<div class="font-display text-body-sm text-on-surface-variant/70">Load: 5.1A</div>
+<button class="w-[64px] h-[32px] rounded-full bg-primary/20 p-1 flex items-center justify-end transition-all duration-300 cursor-pointer border border-primary/40 focus:outline-none">
+<div class="w-[24px] h-[24px] bg-primary rounded-full shadow-[0_0_10px_rgba(74,222,128,0.8)]"></div>
+</button>
+</div>
+</div>
+<!-- Relay 05 - STANDBY -->
+<div class="glass-panel rounded-xl p-md flex flex-col justify-between h-[200px] transition-all duration-300 relative overflow-hidden group hover:border-white/10">
+<div class="flex justify-between items-start relative z-10">
+<div>
+<h2 class="font-numeric text-numeric text-on-surface mb-xs font-semibold">Relay 05</h2>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider block">Standby</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant text-[28px]">power_off</span>
+</div>
+<div class="flex justify-between items-end relative z-10">
+<div class="font-display text-body-sm text-on-surface-variant/50">Load: 0.0A</div>
+<button class="w-[64px] h-[32px] rounded-full bg-surface-container-highest p-1 flex items-center justify-start transition-all duration-300 cursor-pointer border border-white/5 focus:outline-none hover:bg-surface-variant">
+<div class="w-[24px] h-[24px] bg-outline rounded-full"></div>
+</button>
+</div>
+</div>
+<!-- Relay 06 - STANDBY -->
+<div class="glass-panel rounded-xl p-md flex flex-col justify-between h-[200px] transition-all duration-300 relative overflow-hidden group hover:border-white/10">
+<div class="flex justify-between items-start relative z-10">
+<div>
+<h2 class="font-numeric text-numeric text-on-surface mb-xs font-semibold">Relay 06</h2>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider block">Standby</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant text-[28px]">power_off</span>
+</div>
+<div class="flex justify-between items-end relative z-10">
+<div class="font-display text-body-sm text-on-surface-variant/50">Load: 0.0A</div>
+<button class="w-[64px] h-[32px] rounded-full bg-surface-container-highest p-1 flex items-center justify-start transition-all duration-300 cursor-pointer border border-white/5 focus:outline-none hover:bg-surface-variant">
+<div class="w-[24px] h-[24px] bg-outline rounded-full"></div>
+</button>
+</div>
+</div>
+<!-- Relay 07 - ACTIVE -->
+<div class="glass-panel rounded-xl p-md flex flex-col justify-between h-[200px] neon-glow-active transition-all duration-300 relative overflow-hidden group">
+<svg class="absolute top-0 right-0 opacity-[0.03] text-primary w-24 h-24 pointer-events-none" fill="currentColor" viewbox="0 0 100 100">
+<path d="M0,0 L100,0 L100,100 Z" fill="none" stroke="currentColor" stroke-width="1"></path>
+<circle cx="80" cy="20" r="3"></circle>
+<circle cx="60" cy="40" r="3"></circle>
+<line stroke="currentColor" stroke-width="1" x1="80" x2="60" y1="20" y2="40"></line>
+</svg>
+<div class="flex justify-between items-start relative z-10">
+<div>
+<h2 class="font-numeric text-numeric text-on-surface mb-xs font-semibold">Relay 07</h2>
+<span class="font-label-caps text-label-caps text-primary uppercase tracking-wider block">Active</span>
+</div>
+<span class="material-symbols-outlined text-primary text-[28px]" style="font-variation-settings: 'FILL' 1;">power</span>
+</div>
+<div class="flex justify-between items-end relative z-10">
+<div class="font-display text-body-sm text-on-surface-variant/70">Load: 1.2A</div>
+<button class="w-[64px] h-[32px] rounded-full bg-primary/20 p-1 flex items-center justify-end transition-all duration-300 cursor-pointer border border-primary/40 focus:outline-none">
+<div class="w-[24px] h-[24px] bg-primary rounded-full shadow-[0_0_10px_rgba(74,222,128,0.8)]"></div>
+</button>
+</div>
+</div>
+<!-- Relay 08 - STANDBY -->
+<div class="glass-panel rounded-xl p-md flex flex-col justify-between h-[200px] transition-all duration-300 relative overflow-hidden group hover:border-white/10">
+<div class="flex justify-between items-start relative z-10">
+<div>
+<h2 class="font-numeric text-numeric text-on-surface mb-xs font-semibold">Relay 08</h2>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider block">Standby</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant text-[28px]">power_off</span>
+</div>
+<div class="flex justify-between items-end relative z-10">
+<div class="font-display text-body-sm text-on-surface-variant/50">Load: 0.0A</div>
+<button class="w-[64px] h-[32px] rounded-full bg-surface-container-highest p-1 flex items-center justify-start transition-all duration-300 cursor-pointer border border-white/5 focus:outline-none hover:bg-surface-variant">
+<div class="w-[24px] h-[24px] bg-outline rounded-full"></div>
+</button>
+</div>
+</div>
+</div><div class="glass-panel rounded-xl p-md mt-xl flex flex-col gap-md relative overflow-hidden">
+<!-- Header -->
+<div class="flex justify-between items-center relative z-10 border-b border-white/10 pb-sm">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary">terminal</span>
+<h2 class="font-label-caps text-label-caps text-on-surface uppercase tracking-widest">Live Modbus Console</h2>
+</div>
+<div class="flex gap-xs">
+<div class="w-2 h-2 rounded-full bg-error/50"></div>
+<div class="w-2 h-2 rounded-full bg-tertiary/50"></div>
+<div class="w-2 h-2 rounded-full bg-primary/50"></div>
+</div>
+</div>
+<!-- Terminal Body -->
+<div class="font-numeric text-body-sm space-y-xs overflow-y-auto max-h-[300px] custom-scrollbar">
+<div class="flex gap-sm">
+<span class="text-primary/50 shrink-0">[14:20:01]</span>
+<span class="text-on-surface-variant">TX: <span class="text-primary">01 03 00 00 00 08 44 0C</span> (Read Coils 0-7)</span>
+</div>
+<div class="flex gap-sm">
+<span class="text-primary/50 shrink-0">[14:20:01]</span>
+<span class="text-on-surface-variant">RX: <span class="text-secondary">01 03 10 00 FF 00 00 FF 00 00 00 ...</span></span>
+</div>
+<div class="flex gap-sm">
+<span class="text-primary/50 shrink-0">[14:20:05]</span>
+<span class="text-on-surface-variant">TX: <span class="text-primary">01 06 00 01 00 01 D9 CA</span> (Write Single Register)</span>
+</div>
+<div class="flex gap-sm">
+<span class="text-primary/50 shrink-0">[14:20:05]</span>
+<span class="text-primary">INFO: Relay 01 Switched to ON</span>
+</div>
+<div class="flex gap-sm">
+<span class="text-primary/50 shrink-0">[14:20:06]</span>
+<span class="text-on-surface-variant">RX: <span class="text-secondary">01 06 00 01 00 01 D9 CA</span> (ACK)</span>
+</div>
+<div class="flex gap-sm mt-md">
+<span class="text-primary animate-pulse">_</span>
+</div>
+</div>
+</div>
+</main>
+</body></html>

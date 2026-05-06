@@ -1,0 +1,50 @@
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.env
+.venv
+venv/
+env/
+
+# ── Flutter / Dart ────────────────────────────────────────────────────────────
+GUI/build/
+GUI/.dart_tool/
+GUI/.flutter-plugins
+GUI/.flutter-plugins-dependencies
+GUI/.packages
+GUI/pubspec.lock
+
+# IntelliJ / Android Studio
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# macOS Xcode derived data & local configs
+GUI/macos/Pods/
+GUI/macos/Flutter/ephemeral/
+GUI/macos/Runner.xcworkspace/xcuserdata/
+GUI/macos/Runner.xcodeproj/xcuserdata/
+GUI/macos/Runner.xcodeproj/project.xcworkspace/xcuserdata/
+
+# Platform ephemeral build outputs
+GUI/linux/flutter/ephemeral/
+GUI/windows/flutter/ephemeral/
+
+# ── macOS system files ────────────────────────────────────────────────────────
+.DS_Store
+**/.DS_Store
+*.swp
+
+# ── Generated assets (keep source only) ──────────────────────────────────────
+mock/icon_processed.png
+
+# ── Editor ───────────────────────────────────────────────────────────────────
+.vscode/
+*.code-workspace
