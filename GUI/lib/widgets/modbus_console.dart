@@ -17,7 +17,7 @@ class _ModbusConsoleState extends State<ModbusConsole> {
   Color _kindColor(String kind) {
     switch (kind) {
       case 'TX':
-        return kPrimary;
+        return const Color(0xFF64B5F6); // light blue
       case 'RX':
         return kSecondary;
       case 'INFO':
@@ -26,6 +26,20 @@ class _ModbusConsoleState extends State<ModbusConsole> {
         return kError;
       default:
         return kOnSurfaceVariant;
+    }
+  }
+
+  /// Backend sends full ISO timestamp; extract HH:MM:SS.mmm for live display.
+  String _displayTime(String raw) {
+    try {
+      final dt = DateTime.parse(raw);
+      final h = dt.hour.toString().padLeft(2, '0');
+      final m = dt.minute.toString().padLeft(2, '0');
+      final s = dt.second.toString().padLeft(2, '0');
+      final ms = (dt.millisecond).toString().padLeft(3, '0');
+      return '$h:$m:$s.$ms';
+    } catch (_) {
+      return raw; // fallback: show as-is
     }
   }
 
@@ -134,8 +148,8 @@ class _ModbusConsoleState extends State<ModbusConsole> {
               ],
             ),
           ),
-          // ── Log entries (fills remaining height) ──────
-          Expanded(
+          // ── Log entries ───────────────────────────────
+          Flexible(
             child: logs.isEmpty
                 ? const Center(
                     child: Text(
@@ -154,7 +168,7 @@ class _ModbusConsoleState extends State<ModbusConsole> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '[${entry.time}]',
+                              '[${_displayTime(entry.time)}]',
                               style: TextStyle(
                                 fontSize: 13,
                                 fontFamily: 'SpaceGrotesk',
