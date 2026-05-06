@@ -1,5 +1,6 @@
 import asyncio
 import json
+import argparse
 from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import List, Optional
@@ -78,10 +79,20 @@ class ModbusConnection:
                 pass
 
 
-# ── Configurable parameters (match the working CLI) ─────────────────────────
-MODBUS_IP = "192.180.100.21"  # Device IP  (same as CLI modbus-cmd.py)
-MODBUS_PORT = 4196  # Device port (same as CLI)
-DEVICE_ADDRESS = 0x01  # Modbus device address
+# ── Configurable parameters ──────────────────────────────────────────────────
+_p = argparse.ArgumentParser(description="RelayCtrl Pro — Modbus WebSocket Hub")
+_p.add_argument("--modbus-ip", default="192.180.100.21")
+_p.add_argument("--modbus-port", type=int, default=4196)
+_p.add_argument("--device-address", type=lambda x: int(x, 0), default=0x01)
+_p.add_argument("--host", default="0.0.0.0")
+_p.add_argument("--port", type=int, default=8192)
+_args, _ = _p.parse_known_args()  # parse_known_args so uvicorn reload doesn't choke
+
+MODBUS_IP = _args.modbus_ip
+MODBUS_PORT = _args.modbus_port
+DEVICE_ADDRESS = _args.device_address
+HUB_HOST = _args.host
+HUB_PORT = _args.port
 
 manager = ConnectionManager()
 modbus = ModbusConnection(MODBUS_IP, MODBUS_PORT)
@@ -201,4 +212,4 @@ async def websocket_endpoint(websocket: WebSocket):
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8192, ws="wsproto")
+    uvicorn.run(app, host=HUB_HOST, port=HUB_PORT, ws="wsproto")

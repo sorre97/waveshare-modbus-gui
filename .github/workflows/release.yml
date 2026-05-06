@@ -258,10 +258,22 @@ jobs:
             cd Backend
             python3 -m venv venv && source venv/bin/activate
             pip install fastapi uvicorn websockets wsproto
+
+            # Default (connects to board at 192.180.100.21:4196)
             python main.py
+
+            # Custom board IP / port
+            python main.py --modbus-ip 192.168.1.50 --modbus-port 4196
+
+            # All flags:
+            #   --modbus-ip       Relay board IP        (default: 192.180.100.21)
+            #   --modbus-port     Relay board TCP port  (default: 4196)
+            #   --device-address  Modbus address        (default: 0x01)
+            #   --host            Hub bind address      (default: 0.0.0.0)
+            #   --port            Hub WebSocket port    (default: 8192)
             ```
 
-            > Edit `MODBUS_IP` / `MODBUS_PORT` at the top of `main.py` if your device IP differs.
+            > Edit defaults at the top of `main.py` to make them permanent.
 
             ### macOS Gatekeeper
             The app is ad-hoc signed but not notarized (no Apple Developer ID). After dragging to Applications, run once:

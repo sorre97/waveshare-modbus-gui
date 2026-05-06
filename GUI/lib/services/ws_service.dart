@@ -34,8 +34,12 @@ class WsService extends ChangeNotifier {
   bool isConnected = false;
   List<bool> relayStates = List.generate(8, (_) => false);
   final List<ConsoleEntry> consoleLogs = [];
-  // pending[index] = expected state after optimistic update
   final Map<int, bool> _pendingToggles = {};
+
+  // Reconnect storm prevention: each connect() increments _generation.
+  // onDone/onError only schedule reconnect if their generation still matches.
+  int _generation = 0;
+  Timer? _reconnectTimer;
 
   // Relay custom names (index → name); empty string = use default
   List<String> relayNames = List.generate(8, (_) => '');
@@ -82,33 +86,35 @@ class WsService extends ChangeNotifier {
   }
 
   void connect() {
+    // Cancel any pending reconnect timer
+    _reconnectTimer?.cancel();
+    _reconnectTimer = null;
+
+    // Bump generation — any onDone/onError still in flight from the old
+    // channel will see a stale generation and won't schedule another connect.
+    final gen = ++_generation;
+
     _channel?.sink.close();
+    _channel = null;
     isConnected = false;
     notifyListeners();
+
     try {
       final wsUrl = Uri.parse('ws://$ip:$port/ws');
       _channel = WebSocketChannel.connect(wsUrl);
       _channel!.stream.listen(
         (message) {
+          if (_generation != gen) return; // stale, discard
           final data = jsonDecode(message as String);
           if (data['type'] == 'state') {
             final incoming = List<bool>.from(data['data'] as List);
-            // Check for mismatches with pending optimistic updates
-            _pendingToggles.forEach((idx, expected) {
-              if (incoming[idx] != expected) {
-                // Server disagrees — will be corrected by incoming state
-              }
-            });
             _pendingToggles.clear();
             relayStates = incoming;
-            if (!isConnected) {
-              isConnected = true;
-            }
+            if (!isConnected) isConnected = true;
           } else if (data['type'] == 'log') {
             final entry = ConsoleEntry.fromJson(
               data['entry'] as Map<String, dynamic>,
             );
-            // Stamp with client-side time so display is always HH:MM:SS.mmm
             final stamped = ConsoleEntry(
               time: DateTime.now().toIso8601String(),
               kind: entry.kind,
@@ -117,26 +123,27 @@ class WsService extends ChangeNotifier {
             );
             consoleLogs.insert(0, stamped);
             if (consoleLogs.length > 200) consoleLogs.removeLast();
-            // Note: no optimistic revert on ERROR — background poller corrects
-            // state within 1s when the device responds. Reverting here caused a
-            // feedback loop (revert → rebuild → spurious toggleRelay → ERROR → …)
           }
           notifyListeners();
         },
         onDone: () {
+          if (_generation != gen) return; // stale, discard
           isConnected = false;
           notifyListeners();
-          Future.delayed(const Duration(seconds: 5), connect);
+          _reconnectTimer = Timer(const Duration(seconds: 5), connect);
         },
         onError: (_) {
+          if (_generation != gen) return; // stale, discard
           isConnected = false;
           notifyListeners();
-          Future.delayed(const Duration(seconds: 5), connect);
+          _reconnectTimer = Timer(const Duration(seconds: 5), connect);
         },
       );
     } catch (_) {
+      if (_generation != gen) return;
       isConnected = false;
       notifyListeners();
+      _reconnectTimer = Timer(const Duration(seconds: 5), connect);
     }
   }
 
@@ -157,6 +164,8 @@ class WsService extends ChangeNotifier {
 
   @override
   void dispose() {
+    _reconnectTimer?.cancel();
+    _generation++; // invalidate any in-flight callbacks
     _channel?.sink.close();
     super.dispose();
   }
