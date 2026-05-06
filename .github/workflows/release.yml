@@ -248,7 +248,16 @@ jobs:
             cd Backend
             python3 -m venv venv && source venv/bin/activate
             pip install fastapi uvicorn websockets wsproto
-            python main.py
+
+            # Point at your Modbus device (default IP matches original CLI)
+            python main.py --modbus-ip 192.180.100.21 --modbus-port 4196
+
+            # All options:
+            #   --modbus-ip       IP of Modbus device   (default: 192.180.100.21)
+            #   --modbus-port     TCP port of device    (default: 4196)
+            #   --device-address  Modbus address        (default: 0x01)
+            #   --host            Hub bind address      (default: 0.0.0.0)
+            #   --port            Hub WebSocket port    (default: 8192)
             ```
 
             > The backend will be Dockerized in a future release.
