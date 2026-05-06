@@ -50,15 +50,18 @@ jobs:
 
       - name: Create .dmg
         run: |
-          APP_PATH="GUI/build/macos/Build/Products/Release/gui.app"
+          # Find the actual .app (name comes from PRODUCT_NAME in xcconfig)
+          RELEASE_DIR="GUI/build/macos/Build/Products/Release"
+          APP_PATH=$(find "$RELEASE_DIR" -maxdepth 1 -name "*.app" | head -1)
+          APP_NAME=$(basename "$APP_PATH")
+          echo "Found app: $APP_PATH"
           create-dmg \
             --volname "RelayCtrl Pro" \
-            --volicon "$APP_PATH/Contents/Resources/AppIcon.icns" \
             --window-pos 200 120 \
             --window-size 660 400 \
             --icon-size 128 \
-            --icon "gui.app" 180 170 \
-            --hide-extension "gui.app" \
+            --icon "$APP_NAME" 180 170 \
+            --hide-extension "$APP_NAME" \
             --app-drop-link 480 170 \
             --no-internet-enable \
             "RelayCtrlPro-macOS.dmg" \
@@ -160,7 +163,7 @@ jobs:
   # ── Windows build → portable zip ────────────────────────────────────────────
   build-windows:
     needs: version
-    runs-on: windows-latest
+    runs-on: windows-2022
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
