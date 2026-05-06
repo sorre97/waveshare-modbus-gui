@@ -1,0 +1,258 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  # ── Derive version tag ──────────────────────────────────────────────────────
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Generate tag
+        id: tag
+        run: |
+          COUNT=$(git rev-list --count HEAD)
+          SHA=$(git rev-parse --short HEAD)
+          echo "tag=v0.1.${COUNT}-${SHA}" >> "$GITHUB_OUTPUT"
+
+  # ── macOS build → .dmg ──────────────────────────────────────────────────────
+  build-macos:
+    needs: version
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.32.x'
+          channel: 'stable'
+          cache: true
+
+      - name: Flutter pub get
+        working-directory: GUI
+        run: flutter pub get
+
+      - name: Build macOS release
+        working-directory: GUI
+        run: flutter build macos --release
+
+      - name: Install create-dmg
+        run: brew install create-dmg
+
+      - name: Create .dmg
+        run: |
+          APP_PATH="GUI/build/macos/Build/Products/Release/gui.app"
+          create-dmg \
+            --volname "RelayCtrl Pro" \
+            --volicon "$APP_PATH/Contents/Resources/AppIcon.icns" \
+            --window-pos 200 120 \
+            --window-size 660 400 \
+            --icon-size 128 \
+            --icon "gui.app" 180 170 \
+            --hide-extension "gui.app" \
+            --app-drop-link 480 170 \
+            --no-internet-enable \
+            "RelayCtrlPro-macOS.dmg" \
+            "$APP_PATH"
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: RelayCtrlPro-macOS
+          path: RelayCtrlPro-macOS.dmg
+
+  # ── Linux build → AppImage ───────────────────────────────────────────────────
+  build-linux:
+    needs: version
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y \
+            clang cmake ninja-build pkg-config \
+            libgtk-3-dev liblzma-dev libstdc++-12-dev \
+            libglib2.0-dev libglib2.0-bin \
+            fuse libfuse2 desktop-file-utils
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.32.x'
+          channel: 'stable'
+          cache: true
+
+      - run: flutter config --enable-linux-desktop
+
+      - name: Flutter pub get
+        working-directory: GUI
+        run: flutter pub get
+
+      - name: Build Linux release
+        working-directory: GUI
+        run: flutter build linux --release
+
+      - name: Download appimagetool
+        run: |
+          wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage \
+            -O /usr/local/bin/appimagetool
+          chmod +x /usr/local/bin/appimagetool
+
+      - name: Assemble AppDir
+        run: |
+          BUNDLE=GUI/build/linux/x64/release/bundle
+          APPDIR=AppDir
+
+          mkdir -p $APPDIR/usr/bin
+          mkdir -p $APPDIR/usr/lib
+          mkdir -p $APPDIR/usr/share/icons/hicolor/256x256/apps
+          mkdir -p $APPDIR/usr/share/applications
+
+          # Copy binary and data
+          cp -r $BUNDLE/* $APPDIR/usr/bin/
+
+          # Icon (256px)
+          cp GUI/linux/runner/icons/icon_256.png \
+            $APPDIR/usr/share/icons/hicolor/256x256/apps/relayctrl-pro.png
+          cp GUI/linux/runner/icons/icon_256.png $APPDIR/relayctrl-pro.png
+
+          # Desktop entry
+          cat > $APPDIR/usr/share/applications/relayctrl-pro.desktop << 'EOF'
+          [Desktop Entry]
+          Name=RelayCtrl Pro
+          Exec=relayctrl-pro
+          Icon=relayctrl-pro
+          Type=Application
+          Categories=Utility;
+          EOF
+
+          cp $APPDIR/usr/share/applications/relayctrl-pro.desktop $APPDIR/
+
+          # AppRun
+          cat > $APPDIR/AppRun << 'APPRUN'
+          #!/bin/sh
+          HERE="$(dirname "$(readlink -f "$0")")"
+          export LD_LIBRARY_PATH="$HERE/usr/bin/lib:$LD_LIBRARY_PATH"
+          exec "$HERE/usr/bin/relayctrl-pro" "$@"
+          APPRUN
+          chmod +x $APPDIR/AppRun
+
+      - name: Build AppImage
+        run: |
+          ARCH=x86_64 appimagetool --no-appstream AppDir RelayCtrlPro-Linux-x86_64.AppImage
+
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: RelayCtrlPro-Linux
+          path: RelayCtrlPro-Linux-x86_64.AppImage
+
+  # ── Windows build → portable zip ────────────────────────────────────────────
+  build-windows:
+    needs: version
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.32.x'
+          channel: 'stable'
+          cache: true
+
+      - run: flutter config --enable-windows-desktop
+
+      - name: Flutter pub get
+        working-directory: GUI
+        run: flutter pub get
+
+      - name: Build Windows release
+        working-directory: GUI
+        run: flutter build windows --release
+
+      - name: Package Windows portable zip
+        shell: pwsh
+        run: |
+          $src = "GUI\build\windows\x64\runner\Release"
+          $dst = "RelayCtrlPro-Windows-x64-Portable"
+          New-Item -ItemType Directory -Path $dst | Out-Null
+          Copy-Item "$src\*" $dst -Recurse
+          Compress-Archive -Path $dst -DestinationPath RelayCtrlPro-Windows-x64-Portable.zip
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: RelayCtrlPro-Windows
+          path: RelayCtrlPro-Windows-x64-Portable.zip
+
+  # ── Backend zip ──────────────────────────────────────────────────────────────
+  build-backend:
+    needs: version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Package Backend as zip
+        run: |
+          zip -r RelayCtrlPro-Backend.zip Backend/ \
+            --exclude "Backend/venv/*" \
+            --exclude "Backend/__pycache__/*" \
+            --exclude "Backend/*.pyc"
+
+      - name: Upload Backend artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: RelayCtrlPro-Backend
+          path: RelayCtrlPro-Backend.zip
+
+  # ── Create GitHub Release ────────────────────────────────────────────────────
+  release:
+    needs: [version, build-macos, build-linux, build-windows, build-backend]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.version.outputs.tag }}
+          name: "RelayCtrl Pro ${{ needs.version.outputs.tag }}"
+          body: |
+            ## RelayCtrl Pro — Automated Release
+
+            ### Downloads
+            | Platform | File | Notes |
+            |----------|------|-------|
+            | macOS | `RelayCtrlPro-macOS.dmg` | Open DMG, drag app to Applications |
+            | Linux x64 | `RelayCtrlPro-Linux-x86_64.AppImage` | `chmod +x` then run — no install needed |
+            | Windows x64 | `RelayCtrlPro-Windows-x64-Portable.zip` | Extract folder, run `relayctrl-pro.exe` — no install needed |
+            | Backend | `RelayCtrlPro-Backend.zip` | Python FastAPI hub |
+
+            ### Backend quick start
+            ```bash
+            cd Backend
+            python3 -m venv venv && source venv/bin/activate
+            pip install fastapi uvicorn websockets wsproto
+            python main.py
+            ```
+
+            > The backend will be Dockerized in a future release.
+          draft: false
+          prerelease: false
+          files: |
+            artifacts/RelayCtrlPro-macOS/RelayCtrlPro-macOS.dmg
+            artifacts/RelayCtrlPro-Linux/RelayCtrlPro-Linux-x86_64.AppImage
+            artifacts/RelayCtrlPro-Windows/RelayCtrlPro-Windows-x64-Portable.zip
+            artifacts/RelayCtrlPro-Backend/RelayCtrlPro-Backend.zip
