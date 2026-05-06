@@ -148,8 +148,8 @@ class _ModbusConsoleState extends State<ModbusConsole> {
               ],
             ),
           ),
-          // ── Log entries ───────────────────────────────
-          Flexible(
+          // ── Log entries (fills remaining height) ──────
+          Expanded(
             child: logs.isEmpty
                 ? const Center(
                     child: Text(

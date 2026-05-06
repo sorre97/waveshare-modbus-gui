@@ -119,11 +119,8 @@ class DashboardScreen extends StatelessWidget {
 
             SizedBox(height: compact ? 12 : 16),
 
-            // ── Modbus console (capped at 35% of available height) ────
-            ConstrainedBox(
-              constraints: BoxConstraints(
-                maxHeight: constraints.maxHeight * 0.35,
-              ),
+            // ── Modbus console (flex 1 — takes all remaining space) ────
+            Expanded(
               child: Padding(
                 padding: EdgeInsets.fromLTRB(hPad, 0, hPad, compact ? 16 : 24),
                 child: ModbusConsole(service: service),
