@@ -249,7 +249,7 @@ jobs:
             ### Downloads
             | Platform | File | Notes |
             |----------|------|-------|
-            | macOS | `RelayCtrlPro-macOS.dmg` | Open DMG, drag app to Applications |
+            | macOS | `RelayCtrlPro-macOS.dmg` | See macOS note below |
             | Linux x64 | `RelayCtrlPro-Linux-x86_64.AppImage` | `chmod +x` then run — no install needed |
             | Windows x64 | `RelayCtrlPro-Windows-x64-Portable.zip` | Extract folder, run `relayctrl-pro.exe` — no install needed |
             | Backend | `RelayCtrlPro-Backend.zip` | Python FastAPI hub |
@@ -263,6 +263,13 @@ jobs:
             ```
 
             > Edit `MODBUS_IP` / `MODBUS_PORT` at the top of `main.py` if your device IP differs.
+
+            ### macOS Gatekeeper
+            The app is ad-hoc signed but not notarized (no Apple Developer ID). After dragging to Applications, run once:
+            ```bash
+            xattr -cr "/Applications/RelayCtrl Pro.app"
+            ```
+            Then open normally. This removes the quarantine flag macOS sets on downloaded files.
           draft: false
           prerelease: false
           files: |
