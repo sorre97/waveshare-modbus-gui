@@ -14,6 +14,29 @@ class ModbusConsole extends StatefulWidget {
 }
 
 class _ModbusConsoleState extends State<ModbusConsole> {
+  @override
+  void initState() {
+    super.initState();
+    widget.service.addListener(_onServiceUpdate);
+  }
+
+  @override
+  void didUpdateWidget(ModbusConsole oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.service != widget.service) {
+      oldWidget.service.removeListener(_onServiceUpdate);
+      widget.service.addListener(_onServiceUpdate);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.service.removeListener(_onServiceUpdate);
+    super.dispose();
+  }
+
+  void _onServiceUpdate() => setState(() {});
+
   Color _kindColor(String kind) {
     switch (kind) {
       case 'TX':
@@ -150,72 +173,75 @@ class _ModbusConsoleState extends State<ModbusConsole> {
           ),
           // ── Log entries (fills remaining height) ──────
           Expanded(
-            child: logs.isEmpty
-                ? const Center(
-                    child: Text(
-                      'Waiting for Modbus activity...',
-                      style: TextStyle(color: kOnSurfaceVariant, fontSize: 13),
-                    ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: logs.length,
-                    itemBuilder: (context, i) {
-                      final entry = logs[i];
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 6),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '[${_displayTime(entry.time)}]',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontFamily: 'SpaceGrotesk',
-                                color: kPrimary.withValues(alpha: 0.5),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: RichText(
-                                text: TextSpan(
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontFamily: 'SpaceGrotesk',
-                                  ),
-                                  children: [
-                                    TextSpan(
-                                      text: '${entry.kind}: ',
-                                      style: TextStyle(
-                                        color: _kindColor(entry.kind),
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    if (entry.hex.isNotEmpty)
-                                      TextSpan(
-                                        text: entry.hex,
-                                        style: TextStyle(
-                                          color: _kindColor(entry.kind),
-                                        ),
-                                      ),
-                                    if (entry.description.isNotEmpty)
-                                      TextSpan(
-                                        text: entry.hex.isNotEmpty
-                                            ? '  (${entry.description})'
-                                            : entry.description,
-                                        style: const TextStyle(
-                                          color: kOnSurfaceVariant,
-                                        ),
-                                      ),
-                                  ],
+            child: SelectionArea(
+              child: logs.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'Waiting for Modbus activity...',
+                        style:
+                            TextStyle(color: kOnSurfaceVariant, fontSize: 13),
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: logs.length,
+                      itemBuilder: (context, i) {
+                        final entry = logs[i];
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '[${_displayTime(entry.time)}]',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontFamily: 'SpaceGrotesk',
+                                  color: kPrimary.withValues(alpha: 0.5),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: RichText(
+                                  text: TextSpan(
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontFamily: 'SpaceGrotesk',
+                                    ),
+                                    children: [
+                                      TextSpan(
+                                        text: '${entry.kind}: ',
+                                        style: TextStyle(
+                                          color: _kindColor(entry.kind),
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      if (entry.hex.isNotEmpty)
+                                        TextSpan(
+                                          text: entry.hex,
+                                          style: TextStyle(
+                                            color: _kindColor(entry.kind),
+                                          ),
+                                        ),
+                                      if (entry.description.isNotEmpty)
+                                        TextSpan(
+                                          text: entry.hex.isNotEmpty
+                                              ? '  (${entry.description})'
+                                              : entry.description,
+                                          style: const TextStyle(
+                                            color: kOnSurfaceVariant,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+            ),
           ),
         ],
       ),

@@ -115,15 +115,11 @@ class WsService extends ChangeNotifier {
               hex: entry.hex,
               description: entry.description,
             );
-            // On ERROR, revert any pending optimistic toggles
-            if (stamped.kind == 'ERROR' && _pendingToggles.isNotEmpty) {
-              _pendingToggles.forEach((idx, expected) {
-                relayStates[idx] = !expected; // revert
-              });
-              _pendingToggles.clear();
-            }
             consoleLogs.insert(0, stamped);
             if (consoleLogs.length > 200) consoleLogs.removeLast();
+            // Note: no optimistic revert on ERROR — background poller corrects
+            // state within 1s when the device responds. Reverting here caused a
+            // feedback loop (revert → rebuild → spurious toggleRelay → ERROR → …)
           }
           notifyListeners();
         },
