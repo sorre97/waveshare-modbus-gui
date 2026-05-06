@@ -250,7 +250,7 @@ jobs:
             |----------|------|-------|
             | macOS | `RelayCtrlPro-macOS.dmg` | See macOS note below |
             | Linux x64 | `RelayCtrlPro-Linux-x86_64.AppImage` | `chmod +x` then run — no install needed |
-            | Windows x64 | `RelayCtrlPro-Windows-x64-Portable.zip` | Extract folder, run `relayctrl-pro.exe` — no install needed |
+            | Windows x64 | `RelayCtrlPro-Windows-x64-Portable.zip` | Extract folder, run `RelayCtrlPro.exe` — no install needed |
             | Backend | `RelayCtrlPro-Backend.zip` | Python FastAPI hub |
 
             ### Backend quick start
@@ -273,7 +273,8 @@ jobs:
             #   --port            Hub WebSocket port    (default: 8192)
             ```
 
-            > Edit defaults at the top of `main.py` to make them permanent.
+            ### Windows SmartScreen
+            The app is not commercially code-signed, so Windows Defender SmartScreen will warn on first run. Click **"More info" → "Run anyway"** to proceed. This is expected for unsigned open-source apps.
 
             ### macOS Gatekeeper
             The app is ad-hoc signed but not notarized (no Apple Developer ID). After dragging to Applications, run once:
