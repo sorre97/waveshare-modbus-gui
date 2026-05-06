@@ -45,6 +45,13 @@ jobs:
         working-directory: GUI
         run: flutter build macos --release
 
+      - name: Ad-hoc code sign
+        run: |
+          RELEASE_DIR="GUI/build/macos/Build/Products/Release"
+          APP_PATH=$(find "$RELEASE_DIR" -maxdepth 1 -name "*.app" | head -1)
+          echo "Signing: $APP_PATH"
+          codesign --deep --force --sign - "$APP_PATH"
+
       - name: Install create-dmg
         run: brew install create-dmg
 
@@ -248,19 +255,10 @@ jobs:
             cd Backend
             python3 -m venv venv && source venv/bin/activate
             pip install fastapi uvicorn websockets wsproto
-
-            # Point at your Modbus device (default IP matches original CLI)
-            python main.py --modbus-ip 192.180.100.21 --modbus-port 4196
-
-            # All options:
-            #   --modbus-ip       IP of Modbus device   (default: 192.180.100.21)
-            #   --modbus-port     TCP port of device    (default: 4196)
-            #   --device-address  Modbus address        (default: 0x01)
-            #   --host            Hub bind address      (default: 0.0.0.0)
-            #   --port            Hub WebSocket port    (default: 8192)
+            python main.py
             ```
 
-            > The backend will be Dockerized in a future release.
+            > Edit `MODBUS_IP` / `MODBUS_PORT` at the top of `main.py` if your device IP differs.
           draft: false
           prerelease: false
           files: |
