@@ -11,13 +11,13 @@ void main() async {
   WindowOptions windowOptions = const WindowOptions(
     size: Size(1280, 800),
     minimumSize: Size(900, 620),
-    maximumSize: Size(double.infinity, 1000),
     center: true,
     title: 'RelayCtrl Pro',
     backgroundColor: Color(0xFF050505),
     titleBarStyle: TitleBarStyle.normal,
   );
   await windowManager.waitUntilReadyToShow(windowOptions, () async {
+    await windowManager.setMaximumSize(const Size(99999, 1000));
     await windowManager.show();
     await windowManager.focus();
   });

@@ -19,11 +19,11 @@ class ConsoleEntry {
   });
 
   factory ConsoleEntry.fromJson(Map<String, dynamic> json) => ConsoleEntry(
-    time: json['time'] ?? '',
-    kind: json['kind'] ?? '',
-    hex: json['hex'] ?? '',
-    description: json['description'] ?? '',
-  );
+        time: json['time'] ?? '',
+        kind: json['kind'] ?? '',
+        hex: json['hex'] ?? '',
+        description: json['description'] ?? '',
+      );
 }
 
 class WsService extends ChangeNotifier {
@@ -108,14 +108,21 @@ class WsService extends ChangeNotifier {
             final entry = ConsoleEntry.fromJson(
               data['entry'] as Map<String, dynamic>,
             );
+            // Stamp with client-side time so display is always HH:MM:SS.mmm
+            final stamped = ConsoleEntry(
+              time: DateTime.now().toIso8601String(),
+              kind: entry.kind,
+              hex: entry.hex,
+              description: entry.description,
+            );
             // On ERROR, revert any pending optimistic toggles
-            if (entry.kind == 'ERROR' && _pendingToggles.isNotEmpty) {
+            if (stamped.kind == 'ERROR' && _pendingToggles.isNotEmpty) {
               _pendingToggles.forEach((idx, expected) {
                 relayStates[idx] = !expected; // revert
               });
               _pendingToggles.clear();
             }
-            consoleLogs.insert(0, entry);
+            consoleLogs.insert(0, stamped);
             if (consoleLogs.length > 200) consoleLogs.removeLast();
           }
           notifyListeners();
