@@ -106,7 +106,7 @@ def make_cmd(func: int, subaddr: int, value: int) -> bytearray:
 async def broadcast_log(kind: str, hex_str: str = "", description: str = ""):
     if not manager.has_clients():
         return  # No one listening — skip the broadcast overhead
-    now = datetime.now().strftime("%H:%M:%S")
+    now = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]  # ms precision
     entry = {"time": now, "kind": kind, "hex": hex_str, "description": description}
     await manager.broadcast(json.dumps({"type": "log", "entry": entry}))
 

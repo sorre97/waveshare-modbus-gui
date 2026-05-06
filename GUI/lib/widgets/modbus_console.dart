@@ -55,13 +55,13 @@ class _ModbusConsoleState extends State<ModbusConsole> {
         .replaceAll(':', '-')
         .replaceAll('.', '-')
         .substring(0, 19);
-    final suggestedName = 'relayctrl_log_$ts.txt';
+    final suggestedName = 'relayctrl_log_$ts.log';
 
     final path = await FilePicker.platform.saveFile(
       dialogTitle: 'Export Modbus Log',
       fileName: suggestedName,
       type: FileType.custom,
-      allowedExtensions: ['txt'],
+      allowedExtensions: ['log'],
     );
 
     if (path == null) return; // user cancelled
@@ -209,8 +209,8 @@ class _ModbusConsoleState extends State<ModbusConsole> {
   }
 
   Widget _dot(Color color) => Container(
-    width: 8,
-    height: 8,
-    decoration: BoxDecoration(shape: BoxShape.circle, color: color),
-  );
+        width: 8,
+        height: 8,
+        decoration: BoxDecoration(shape: BoxShape.circle, color: color),
+      );
 }
