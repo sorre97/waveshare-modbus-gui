@@ -1,6 +1,5 @@
 import asyncio
 import json
-import argparse
 from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import List, Optional
@@ -8,45 +7,6 @@ from typing import List, Optional
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 import uvicorn
 import pycrc
-
-
-# ── CLI arguments ────────────────────────────────────────────────────────────
-def _parse_args():
-    parser = argparse.ArgumentParser(description="RelayCtrl Pro — Modbus WebSocket Hub")
-    parser.add_argument(
-        "--modbus-ip",
-        default="192.180.100.21",
-        help="IP address of the Modbus device (default: 192.180.100.21)",
-    )
-    parser.add_argument(
-        "--modbus-port",
-        type=int,
-        default=4196,
-        help="TCP port of the Modbus device (default: 4196)",
-    )
-    parser.add_argument(
-        "--device-address",
-        type=lambda x: int(x, 0),  # accepts 0x01 or 1
-        default=0x01,
-        help="Modbus device address (default: 0x01)",
-    )
-    parser.add_argument(
-        "--port",
-        type=int,
-        default=8192,
-        help="WebSocket hub port to listen on (default: 8192)",
-    )
-    parser.add_argument(
-        "--host",
-        default="0.0.0.0",
-        help="Host to bind the hub server (default: 0.0.0.0)",
-    )
-    # parse_known_args so uvicorn reload mode doesn't choke on extra flags
-    args, _ = parser.parse_known_args()
-    return args
-
-
-_ARGS = _parse_args()
 
 
 # ── Connection Manager ──────────────────────────────────────────────────────
@@ -118,21 +78,14 @@ class ModbusConnection:
                 pass
 
 
-# ── Globals ─────────────────────────────────────────────────────────────────
-MODBUS_IP = _ARGS.modbus_ip
-MODBUS_PORT = _ARGS.modbus_port
-DEVICE_ADDRESS = _ARGS.device_address
-HUB_HOST = _ARGS.host
-HUB_PORT = _ARGS.port
+# ── Configurable parameters (match the working CLI) ─────────────────────────
+MODBUS_IP = "192.180.100.21"  # Device IP  (same as CLI modbus-cmd.py)
+MODBUS_PORT = 4196  # Device port (same as CLI)
+DEVICE_ADDRESS = 0x01  # Modbus device address
 
 manager = ConnectionManager()
 modbus = ModbusConnection(MODBUS_IP, MODBUS_PORT)
 relays_state: List[bool] = [False] * 8
-
-print(
-    f"[Backend] Modbus device : {MODBUS_IP}:{MODBUS_PORT}  (addr 0x{DEVICE_ADDRESS:02X})"
-)
-print(f"[Backend] Hub listening : {HUB_HOST}:{HUB_PORT}")
 
 
 # ── Helpers ─────────────────────────────────────────────────────────────────
@@ -248,4 +201,4 @@ async def websocket_endpoint(websocket: WebSocket):
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host=HUB_HOST, port=HUB_PORT, ws="wsproto")
+    uvicorn.run(app, host="0.0.0.0", port=8192, ws="wsproto")
