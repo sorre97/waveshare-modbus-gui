@@ -242,17 +242,28 @@ class UpdateService extends ChangeNotifier {
         'robocopy "$sourceDir" "$installDir" /E /IS /IT /NFL /NDL /NJH /NJS\r\n'
         'if %errorlevel% leq 7 (\r\n'
         '  rmdir /s /q "$stagingDir"\r\n'
+        '  del "${installDir}${Platform.pathSeparator}_update_launcher.vbs" 2>NUL\r\n'
         '  start "" "$exePath"\r\n'
         ')\r\n'
         '(goto) 2>NUL & del "%~f0"\r\n';
 
     File(batPath).writeAsStringSync(bat);
 
+    // Flutter runs as a GUI subsystem process (no console).
+    // cmd.exe /c requires a console — it silently fails when spawned
+    // from a consoleless parent with ProcessStartMode.detached.
+    // Fix: use wscript.exe to launch the bat via VBScript, which always
+    // creates its own independent process regardless of parent console.
+    final vbsPath =
+        '${installDir}${Platform.pathSeparator}_update_launcher.vbs';
+    final vbs = 'Set sh = CreateObject("WScript.Shell")\r\n'
+        'sh.Run Chr(34) & "$batPath" & Chr(34), 0, False\r\n';
+    File(vbsPath).writeAsStringSync(vbs);
+
     Process.start(
-      'cmd.exe',
-      ['/c', batPath],
+      'wscript.exe',
+      [vbsPath],
       mode: ProcessStartMode.detached,
-      runInShell: false,
     );
     exit(0);
   }
