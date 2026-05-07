@@ -242,27 +242,28 @@ class UpdateService extends ChangeNotifier {
         'robocopy "$sourceDir" "$installDir" /E /IS /IT /NFL /NDL /NJH /NJS\r\n'
         'if %errorlevel% leq 7 (\r\n'
         '  rmdir /s /q "$stagingDir"\r\n'
-        '  del "${installDir}${Platform.pathSeparator}_update_launcher.vbs" 2>NUL\r\n'
         '  start "" "$exePath"\r\n'
         ')\r\n'
         '(goto) 2>NUL & del "%~f0"\r\n';
 
     File(batPath).writeAsStringSync(bat);
 
-    // Flutter runs as a GUI subsystem process (no console).
-    // cmd.exe /c requires a console — it silently fails when spawned
-    // from a consoleless parent with ProcessStartMode.detached.
-    // Fix: use wscript.exe to launch the bat via VBScript, which always
-    // creates its own independent process regardless of parent console.
-    final vbsPath =
-        '${installDir}${Platform.pathSeparator}_update_launcher.vbs';
-    final vbs = 'Set sh = CreateObject("WScript.Shell")\r\n'
-        'sh.Run Chr(34) & "$batPath" & Chr(34), 0, False\r\n';
-    File(vbsPath).writeAsStringSync(vbs);
+    // Flutter is a GUI subsystem process (no console).
+    // cmd.exe /c silently fails from a consoleless parent.
+    // Solution: PowerShell -EncodedCommand (base64 UTF-16LE) sidesteps
+    // ALL quoting/space issues and works from any process type.
+    final psCommand = 'Start-Process -FilePath cmd.exe -ArgumentList @(\'/c\',\'$batPath\') -WindowStyle Hidden';
+    // Encode as UTF-16LE bytes then base64 (what PowerShell -EncodedCommand expects)
+    final utf16Bytes = <int>[];
+    for (final codeUnit in psCommand.codeUnits) {
+      utf16Bytes.add(codeUnit & 0xFF);
+      utf16Bytes.add((codeUnit >> 8) & 0xFF);
+    }
+    final encoded = base64Encode(utf16Bytes);
 
     Process.start(
-      'wscript.exe',
-      [vbsPath],
+      'powershell.exe',
+      ['-WindowStyle', 'Hidden', '-NonInteractive', '-EncodedCommand', encoded],
       mode: ProcessStartMode.detached,
     );
     exit(0);
