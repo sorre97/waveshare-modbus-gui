@@ -5,7 +5,6 @@ import 'package:archive/archive_io.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:path_provider/path_provider.dart';
 
 // ── Data models ───────────────────────────────────────────────────────────────
 
@@ -133,9 +132,19 @@ class UpdateService extends ChangeNotifier {
     _set(UpdateStatus.downloading);
 
     try {
-      final tempDir = await getTemporaryDirectory();
+      // Stage everything next to the running exe — never in %TEMP% which
+      // can be wiped by cleaners between download and apply.
+      final installDir = File(Platform.resolvedExecutable).parent.path;
+      final stagingDir = Directory(
+          '$installDir${Platform.pathSeparator}_update_staging');
+
+      // Clean any leftover staging dir from a previous failed attempt
+      if (stagingDir.existsSync()) stagingDir.deleteSync(recursive: true);
+      stagingDir.createSync(recursive: true);
+
       final fileName = info.downloadUrl.split('/').last;
-      final destFile = File('${tempDir.path}${Platform.pathSeparator}$fileName');
+      final destFile = File(
+          '${stagingDir.path}${Platform.pathSeparator}$fileName');
 
       // Streaming download with progress
       final request = http.Request('GET', Uri.parse(info.downloadUrl));
@@ -159,7 +168,7 @@ class UpdateService extends ChangeNotifier {
 
       // Platform-specific staging
       if (Platform.isWindows) {
-        await _stageWindows(destFile, tempDir);
+        await _stageWindows(destFile, stagingDir);
       } else if (Platform.isLinux) {
         await _stageLinux(destFile);
       }
@@ -183,18 +192,18 @@ class UpdateService extends ChangeNotifier {
 
   // ── Windows ────────────────────────────────────────────────────────────────
 
-  Future<void> _stageWindows(File zipFile, Directory tempDir) async {
-    // Extract zip into a temp staging dir
-    final stagingDir =
-        Directory('${tempDir.path}${Platform.pathSeparator}relayctrl_update');
-    if (stagingDir.existsSync()) stagingDir.deleteSync(recursive: true);
-    stagingDir.createSync();
+  Future<void> _stageWindows(File zipFile, Directory stagingDir) async {
+    // Extract zip into _update_staging\extracted\
+    final extractDir = Directory(
+        '${stagingDir.path}${Platform.pathSeparator}extracted');
+    if (extractDir.existsSync()) extractDir.deleteSync(recursive: true);
+    extractDir.createSync();
 
     final bytes = zipFile.readAsBytesSync();
     final archive = ZipDecoder().decodeBytes(bytes);
     for (final file in archive) {
       final outPath =
-          '${stagingDir.path}${Platform.pathSeparator}${file.name}';
+          '${extractDir.path}${Platform.pathSeparator}${file.name}';
       if (file.isFile) {
         final outFile = File(outPath);
         outFile.createSync(recursive: true);
@@ -203,42 +212,41 @@ class UpdateService extends ChangeNotifier {
         Directory(outPath).createSync(recursive: true);
       }
     }
-    _stagedPath = stagingDir.path;
-  }
-
-  void _applyWindows() {
-    final staged = _stagedPath;
-    if (staged == null) return;
-
-    final exePath = Platform.resolvedExecutable;
-    final installDir = File(exePath).parent.path;
-
-    // The zip extracts to a top-level folder inside the staging dir.
-    // Find it; fall back to the staging dir itself if flat.
-    final topLevel = Directory(staged)
+    // _stagedPath points to the extracted content dir
+    // (top-level folder inside the zip, or extractDir itself if flat)
+    final topLevel = extractDir
         .listSync()
         .whereType<Directory>()
         .firstOrNull;
-    final sourceDir = topLevel?.path ?? staged;
+    _stagedPath = topLevel?.path ?? extractDir.path;
+  }
 
+  void _applyWindows() {
+    final sourceDir = _stagedPath;
+    if (sourceDir == null) return;
+
+    final exePath = Platform.resolvedExecutable;
+    final installDir = File(exePath).parent.path;
+    // The whole staging folder (parent of extracted\) to delete after copy
+    final stagingDir =
+        '${installDir}${Platform.pathSeparator}_update_staging';
     final batPath =
         '${installDir}${Platform.pathSeparator}_update.bat';
 
-    // Robocopy exit codes 0-7 are all success variants.
-    // We use a fixed 3-second sleep instead of a tasklist loop —
-    // the app calls exit(0) right after spawning, so it's gone almost instantly.
+    // Robocopy exits 0-7 for various success states (0=nothing to do,
+    // 1=files copied, etc.). Only 8+ are real errors.
+    // After copy: delete the staging folder, relaunch, self-delete bat.
     final bat = '@echo off\r\n'
         'timeout /t 3 /nobreak >NUL\r\n'
         'robocopy "$sourceDir" "$installDir" /E /IS /IT /NFL /NDL /NJH /NJS\r\n'
         'if %errorlevel% leq 7 (\r\n'
+        '  rmdir /s /q "$stagingDir"\r\n'
         '  start "" "$exePath"\r\n'
         ')\r\n'
         '(goto) 2>NUL & del "%~f0"\r\n';
 
     File(batPath).writeAsStringSync(bat);
 
-    // Spawn the bat detached — NOT wrapped in "start /min" which can be
-    // killed when the parent cmd exits.
     Process.start(
       'cmd.exe',
       ['/c', batPath],
