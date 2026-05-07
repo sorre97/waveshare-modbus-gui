@@ -9,6 +9,7 @@ class Sidebar extends StatefulWidget {
   final String ip;
   final bool isConnected;
   final UpdateService updateService;
+  final String appVersion;
 
   const Sidebar({
     super.key,
@@ -17,6 +18,7 @@ class Sidebar extends StatefulWidget {
     required this.ip,
     required this.isConnected,
     required this.updateService,
+    required this.appVersion,
   });
 
   @override
@@ -243,13 +245,13 @@ class _SidebarState extends State<Sidebar> with SingleTickerProviderStateMixin {
             ),
           ],
 
-          // ── Connection indicator ───────────────────────────────────
+          // ── Connection indicator + version ────────────────────────
           Padding(
             padding: EdgeInsets.fromLTRB(
               _collapsed ? 0 : 24,
               12,
               _collapsed ? 0 : 24,
-              28,
+              _collapsed ? 28 : 16,
             ),
             child: _collapsed
                 ? Center(
@@ -262,27 +264,43 @@ class _SidebarState extends State<Sidebar> with SingleTickerProviderStateMixin {
                       ),
                     ),
                   )
-                : Row(
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: widget.isConnected ? kPrimary : kError,
-                        ),
+                      Row(
+                        children: [
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: widget.isConnected ? kPrimary : kError,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            widget.isConnected ? 'Hub Connected' : 'Hub Offline',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: widget.isConnected ? kPrimary : kError,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        widget.isConnected ? 'Hub Connected' : 'Hub Offline',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: widget.isConnected ? kPrimary : kError,
+                      if (widget.appVersion.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          'v${widget.appVersion}',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: kOutline,
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
           ),
+          if (!_collapsed) const SizedBox(height: 12),
         ],
       ),
     );
@@ -319,15 +337,15 @@ class _UpdateNavItem extends StatelessWidget {
       iconColor = kPrimary;
       label = 'Restart to Update';
     } else if (isAvailable) {
-      icon = Icons.system_update_alt_rounded;
+      icon = Icons.cloud_upload_rounded;
       iconColor = kPrimary;
       label = 'Update Available';
     } else if (isChecking || isDownloading) {
-      icon = Icons.downloading_rounded;
+      icon = Icons.cloud_sync_rounded;
       iconColor = kOnSurfaceVariant;
       label = isDownloading ? 'Downloading...' : 'Checking...';
     } else {
-      icon = Icons.system_update_alt_rounded;
+      icon = Icons.cloud_upload_rounded;
       iconColor = kOnSurfaceVariant;
       label = 'Check for Updates';
     }

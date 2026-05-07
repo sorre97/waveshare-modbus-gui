@@ -147,7 +147,10 @@ class _UpdateModalState extends State<_UpdateModal> {
             const SizedBox(height: 24),
 
             // ── Body ──────────────────────────────────────────────────
-            _buildBody(status, svc),
+            SizedBox(
+              width: double.infinity,
+              child: _buildBody(status, svc),
+            ),
 
             const SizedBox(height: 28),
 
@@ -165,7 +168,7 @@ class _UpdateModalState extends State<_UpdateModal> {
     switch (status) {
       case UpdateStatus.checking:
         return _CenteredStatus(
-          icon: Icons.search_rounded,
+          icon: Icons.cloud_upload_rounded,
           message: 'Checking for updates...',
           subtitle: 'Querying GitHub Releases',
           spinning: true,
@@ -288,7 +291,7 @@ class _UpdateModalState extends State<_UpdateModal> {
 
       case UpdateStatus.idle:
         return _CenteredStatus(
-          icon: Icons.system_update_alt_rounded,
+          icon: Icons.cloud_upload_rounded,
           message: 'Software Update',
           subtitle: 'Initializing...',
           spinning: true,
@@ -308,7 +311,7 @@ class _UpdateModalState extends State<_UpdateModal> {
             const SizedBox(width: 12),
             _PrimaryButton(
               label: 'Download & Install',
-              icon: Icons.download_rounded,
+              icon: Icons.cloud_upload_rounded,
               onPressed: _startDownload,
             ),
           ],
@@ -350,15 +353,15 @@ class _UpdateModalState extends State<_UpdateModal> {
       case UpdateStatus.readyToRestart:
         return Icons.restart_alt_rounded;
       case UpdateStatus.available:
-        return Icons.system_update_alt_rounded;
+        return Icons.cloud_upload_rounded;
       case UpdateStatus.downloading:
-        return Icons.downloading_rounded;
+        return Icons.cloud_sync_rounded;
       case UpdateStatus.upToDate:
         return Icons.verified_rounded;
       case UpdateStatus.error:
         return Icons.error_outline_rounded;
       default:
-        return Icons.system_update_alt_rounded;
+        return Icons.cloud_upload_rounded;
     }
   }
 
@@ -403,8 +406,8 @@ class _CenteredStatus extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const SizedBox(height: 8),
         spinning
             ? SizedBox(
                 width: 48,

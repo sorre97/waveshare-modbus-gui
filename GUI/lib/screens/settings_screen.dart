@@ -601,7 +601,7 @@ class _SoftwareUpdateCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _CardHeader(
-            icon: Icons.system_update_alt_rounded,
+            icon: Icons.cloud_upload_rounded,
             title: 'Software Updates',
           ),
           const SizedBox(height: 20),
@@ -696,9 +696,7 @@ class _SoftwareUpdateCard extends StatelessWidget {
                       ? null
                       : () => showUpdateModal(context, svc),
                   icon: Icon(
-                    isAvailable
-                        ? Icons.download_rounded
-                        : Icons.refresh_rounded,
+                    Icons.cloud_upload_rounded,
                     size: 16,
                   ),
                   label: Text(

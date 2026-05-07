@@ -54,6 +54,7 @@ class _MainLayoutState extends State<MainLayout> {
             ip: widget.service.ip,
             isConnected: widget.service.isConnected,
             updateService: _updateService,
+            appVersion: _updateService.currentVersion,
           ),
           Expanded(
             child: Container(
