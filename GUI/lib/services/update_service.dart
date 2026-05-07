@@ -62,7 +62,8 @@ class UpdateService extends ChangeNotifier {
 
   Future<void> initialize() async {
     final info = await PackageInfo.fromPlatform();
-    _currentVersion = info.version; // "0.1.N" baked in at build time
+    // Strip build metadata suffix (e.g. "0.1.24+24" → "0.1.24")
+    _currentVersion = info.version.split('+').first;
   }
 
   Future<void> checkForUpdate() async {
@@ -319,7 +320,9 @@ class UpdateService extends ChangeNotifier {
   }
 
   List<int> _parseVersion(String v) {
-    final parts = v.split('.').map((p) => int.tryParse(p) ?? 0).toList();
+    // Strip build metadata (e.g. "0.1.24+24" → "0.1.24") and leading "v"
+    final clean = v.split('+').first.replaceFirst(RegExp(r'^v'), '');
+    final parts = clean.split('.').map((p) => int.tryParse(p) ?? 0).toList();
     while (parts.length < 3) {
       parts.add(0);
     }
