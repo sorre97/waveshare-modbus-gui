@@ -210,48 +210,40 @@ class UpdateService extends ChangeNotifier {
     final staged = _stagedPath;
     if (staged == null) return;
 
-    // The exe path: e.g. C:\...\RelayCtrlPro-Windows-x64-Portable\RelayCtrlPro.exe
     final exePath = Platform.resolvedExecutable;
     final installDir = File(exePath).parent.path;
-    final exeName = File(exePath).uri.pathSegments.last;
 
-    // Write a .bat that:
-    //  1. Waits for this process to exit
-    //  2. Robocopy staged dir over install dir
-    //  3. Restarts the app
-    final batPath =
-        '${File(exePath).parent.path}${Platform.pathSeparator}_update.bat';
-
-    // The zip contains a top-level folder (RelayCtrlPro-Windows-x64-Portable\)
-    // Find the first directory inside staged
-    final stagedDir = Directory(staged);
-    final topLevel = stagedDir
+    // The zip extracts to a top-level folder inside the staging dir.
+    // Find it; fall back to the staging dir itself if flat.
+    final topLevel = Directory(staged)
         .listSync()
         .whereType<Directory>()
         .firstOrNull;
     final sourceDir = topLevel?.path ?? staged;
 
-    final bat = '''@echo off
-:: Wait for the app to exit
-:wait
-tasklist /FI "IMAGENAME eq $exeName" 2>NUL | find /I "$exeName" >NUL
-if not errorlevel 1 (
-  timeout /t 1 /nobreak >NUL
-  goto wait
-)
-:: Copy new files over install dir
-robocopy "$sourceDir" "$installDir" /E /IS /IT /NFL /NDL /NJH /NJS >NUL
-:: Relaunch
-start "" "$exePath"
-:: Self-delete
-del "%~f0"
-''';
+    final batPath =
+        '${installDir}${Platform.pathSeparator}_update.bat';
+
+    // Robocopy exit codes 0-7 are all success variants.
+    // We use a fixed 3-second sleep instead of a tasklist loop —
+    // the app calls exit(0) right after spawning, so it's gone almost instantly.
+    final bat = '@echo off\r\n'
+        'timeout /t 3 /nobreak >NUL\r\n'
+        'robocopy "$sourceDir" "$installDir" /E /IS /IT /NFL /NDL /NJH /NJS\r\n'
+        'if %errorlevel% leq 7 (\r\n'
+        '  start "" "$exePath"\r\n'
+        ')\r\n'
+        '(goto) 2>NUL & del "%~f0"\r\n';
 
     File(batPath).writeAsStringSync(bat);
+
+    // Spawn the bat detached — NOT wrapped in "start /min" which can be
+    // killed when the parent cmd exits.
     Process.start(
       'cmd.exe',
-      ['/c', 'start', '', '/min', batPath],
+      ['/c', batPath],
       mode: ProcessStartMode.detached,
+      runInShell: false,
     );
     exit(0);
   }
