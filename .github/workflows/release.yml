@@ -11,6 +11,7 @@ concurrency:
 
 permissions:
   contents: write
+  packages: write
 
 jobs:
   # ── Derive version tag ──────────────────────────────────────────────────────
@@ -18,6 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.tag.outputs.tag }}
+      count: ${{ steps.tag.outputs.count }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -27,6 +29,7 @@ jobs:
         run: |
           COUNT=$(git rev-list --count HEAD)
           echo "tag=v0.1.${COUNT}" >> "$GITHUB_OUTPUT"
+          echo "count=${COUNT}" >> "$GITHUB_OUTPUT"
 
   # ── macOS build → .dmg ──────────────────────────────────────────────────────
   build-macos:
@@ -46,7 +49,7 @@ jobs:
 
       - name: Build macOS release
         working-directory: GUI
-        run: flutter build macos --release
+        run: flutter build macos --release --build-name=0.1.${{ needs.version.outputs.count }} --build-number=${{ needs.version.outputs.count }}
 
       - name: Ad-hoc code sign
         run: |
@@ -113,7 +116,7 @@ jobs:
 
       - name: Build Linux release
         working-directory: GUI
-        run: flutter build linux --release
+        run: flutter build linux --release --build-name=0.1.${{ needs.version.outputs.count }} --build-number=${{ needs.version.outputs.count }}
 
       - name: Download appimagetool
         run: |
@@ -190,7 +193,7 @@ jobs:
 
       - name: Build Windows release
         working-directory: GUI
-        run: flutter build windows --release
+        run: flutter build windows --release --build-name=0.1.${{ needs.version.outputs.count }} --build-number=${{ needs.version.outputs.count }}
 
       - name: Package Windows portable zip
         shell: pwsh
@@ -227,9 +230,32 @@ jobs:
           name: RelayCtrlPro-Backend
           path: RelayCtrlPro-Backend.zip
 
+  # ── Backend Docker image → GHCR ─────────────────────────────────────────────
+  build-backend-image:
+    needs: version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./Backend
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/waveshare-modbus-backend:${{ needs.version.outputs.tag }}
+            ghcr.io/${{ github.repository_owner }}/waveshare-modbus-backend:latest
+
   # ── Create GitHub Release ────────────────────────────────────────────────────
   release:
-    needs: [version, build-macos, build-linux, build-windows, build-backend]
+    needs: [version, build-macos, build-linux, build-windows, build-backend, build-backend-image]
     runs-on: ubuntu-latest
     steps:
       - name: Download all artifacts
@@ -251,19 +277,19 @@ jobs:
             | macOS | `RelayCtrlPro-macOS.dmg` | See macOS note below |
             | Linux x64 | `RelayCtrlPro-Linux-x86_64.AppImage` | `chmod +x` then run — no install needed |
             | Windows x64 | `RelayCtrlPro-Windows-x64-Portable.zip` | Extract folder, run `RelayCtrlPro.exe` — no install needed |
-            | Backend | `RelayCtrlPro-Backend.zip` | Python FastAPI hub |
+            | Backend | `RelayCtrlPro-Backend.zip` | Python FastAPI hub (manual install) |
+            | Backend | `ghcr.io/${{ github.repository_owner }}/waveshare-modbus-backend:${{ needs.version.outputs.tag }}` | Docker/Podman container image |
 
-            ### Backend quick start
+            ### Backend — container (recommended for servers)
             ```bash
-            cd Backend
-            python3 -m venv venv && source venv/bin/activate
-            pip install fastapi uvicorn websockets wsproto
-
-            # Default (connects to board at 192.180.100.21:4196)
-            python main.py
-
-            # Custom board IP / port
-            python main.py --modbus-ip 192.168.1.50 --modbus-port 4196
+            # Pull and run with Podman (or Docker)
+            podman run -d \
+              --name relay-hub \
+              --restart always \
+              -p 8192:8192 \
+              ghcr.io/${{ github.repository_owner }}/waveshare-modbus-backend:latest \
+              --modbus-ip 192.180.100.21 \
+              --modbus-port 4196
 
             # All flags:
             #   --modbus-ip       Relay board IP        (default: 192.180.100.21)
@@ -271,6 +297,14 @@ jobs:
             #   --device-address  Modbus address        (default: 0x01)
             #   --host            Hub bind address      (default: 0.0.0.0)
             #   --port            Hub WebSocket port    (default: 8192)
+            ```
+
+            ### Backend — manual (Python venv)
+            ```bash
+            cd Backend
+            python3 -m venv venv && source venv/bin/activate
+            pip install -r requirements.txt
+            python main.py --modbus-ip 192.168.1.50 --modbus-port 4196
             ```
 
             ### Windows SmartScreen

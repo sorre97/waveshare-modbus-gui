@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import '../theme.dart';
+import '../services/update_service.dart';
+import '../widgets/update_modal.dart';
 
 class Sidebar extends StatefulWidget {
   final int selectedIndex;
   final ValueChanged<int> onSelect;
   final String ip;
   final bool isConnected;
+  final UpdateService updateService;
 
   const Sidebar({
     super.key,
@@ -13,6 +16,7 @@ class Sidebar extends StatefulWidget {
     required this.onSelect,
     required this.ip,
     required this.isConnected,
+    required this.updateService,
   });
 
   @override
@@ -26,8 +30,32 @@ class _SidebarState extends State<Sidebar> with SingleTickerProviderStateMixin {
   static const double _collapsedWidth = 64;
 
   @override
+  void initState() {
+    super.initState();
+    widget.updateService.addListener(_onUpdateChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.updateService.removeListener(_onUpdateChanged);
+    super.dispose();
+  }
+
+  void _onUpdateChanged() => setState(() {});
+
+  void _handleUpdateTap() {
+    final status = widget.updateService.status;
+    if (status == UpdateStatus.readyToRestart) {
+      widget.updateService.applyAndRestart();
+      return;
+    }
+    showUpdateModal(context, widget.updateService);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final w = _collapsed ? _collapsedWidth : _expandedWidth;
+    final updateStatus = widget.updateService.status;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 220),
@@ -175,6 +203,13 @@ class _SidebarState extends State<Sidebar> with SingleTickerProviderStateMixin {
 
           const Spacer(),
 
+          // ── Update item (above divider) ────────────────────────────
+          _UpdateNavItem(
+            status: updateStatus,
+            collapsed: _collapsed,
+            onTap: _handleUpdateTap,
+          ),
+
           // ── Bottom links ───────────────────────────────────────────
           if (!_collapsed) ...[
             const Divider(
@@ -253,6 +288,147 @@ class _SidebarState extends State<Sidebar> with SingleTickerProviderStateMixin {
     );
   }
 }
+
+// ── Update nav item ───────────────────────────────────────────────────────────
+
+class _UpdateNavItem extends StatelessWidget {
+  final UpdateStatus status;
+  final bool collapsed;
+  final VoidCallback onTap;
+
+  const _UpdateNavItem({
+    required this.status,
+    required this.collapsed,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isReady = status == UpdateStatus.readyToRestart;
+    final isAvailable = status == UpdateStatus.available;
+    final isChecking = status == UpdateStatus.checking;
+    final isDownloading = status == UpdateStatus.downloading;
+    final hasAlert = isReady || isAvailable;
+
+    final Color iconColor;
+    final IconData icon;
+    final String label;
+
+    if (isReady) {
+      icon = Icons.restart_alt_rounded;
+      iconColor = kPrimary;
+      label = 'Restart to Update';
+    } else if (isAvailable) {
+      icon = Icons.system_update_alt_rounded;
+      iconColor = kPrimary;
+      label = 'Update Available';
+    } else if (isChecking || isDownloading) {
+      icon = Icons.downloading_rounded;
+      iconColor = kOnSurfaceVariant;
+      label = isDownloading ? 'Downloading...' : 'Checking...';
+    } else {
+      icon = Icons.system_update_alt_rounded;
+      iconColor = kOnSurfaceVariant;
+      label = 'Check for Updates';
+    }
+
+    final itemContent = collapsed
+        ? Center(
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Icon(icon, color: iconColor, size: 22),
+                if (hasAlert)
+                  Positioned(
+                    top: -3,
+                    right: -3,
+                    child: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: kPrimary,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          )
+        : Row(
+            children: [
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Icon(icon, color: iconColor, size: 22),
+                  if (hasAlert)
+                    Positioned(
+                      top: -3,
+                      right: -3,
+                      child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: kPrimary,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight:
+                        hasAlert ? FontWeight.w600 : FontWeight.w400,
+                    color: hasAlert ? kPrimary : kOnSurfaceVariant,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (isReady)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  margin: const EdgeInsets.only(right: 4),
+                  decoration: BoxDecoration(
+                    color: kNeonGlowBg,
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: kNeonGlowBorder),
+                  ),
+                  child: const Text(
+                    'READY',
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.2,
+                      color: kPrimary,
+                      fontFamily: 'SpaceGrotesk',
+                    ),
+                  ),
+                ),
+            ],
+          );
+
+    return Tooltip(
+      message: collapsed ? label : '',
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: collapsed ? 0 : 24,
+            vertical: 12,
+          ),
+          child: itemContent,
+        ),
+      ),
+    );
+  }
+}
+
+// ── Standard nav item ─────────────────────────────────────────────────────────
 
 class _NavItem extends StatelessWidget {
   final IconData icon;

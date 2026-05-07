@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/update_service.dart';
 import '../services/ws_service.dart';
 import '../theme.dart';
 import '../widgets/sidebar.dart';
@@ -15,11 +16,20 @@ class MainLayout extends StatefulWidget {
 
 class _MainLayoutState extends State<MainLayout> {
   int _selectedIndex = 0;
+  final UpdateService _updateService = UpdateService();
 
   @override
   void initState() {
     super.initState();
     widget.service.addListener(_onServiceUpdate);
+    _updateService.addListener(_onServiceUpdate);
+    _initUpdate();
+  }
+
+  Future<void> _initUpdate() async {
+    await _updateService.initialize();
+    // Silent background check — no UI until something is actually available
+    await _updateService.checkForUpdate();
   }
 
   void _onServiceUpdate() => setState(() {});
@@ -27,6 +37,8 @@ class _MainLayoutState extends State<MainLayout> {
   @override
   void dispose() {
     widget.service.removeListener(_onServiceUpdate);
+    _updateService.removeListener(_onServiceUpdate);
+    _updateService.dispose();
     super.dispose();
   }
 
@@ -41,10 +53,10 @@ class _MainLayoutState extends State<MainLayout> {
             onSelect: (i) => setState(() => _selectedIndex = i),
             ip: widget.service.ip,
             isConnected: widget.service.isConnected,
+            updateService: _updateService,
           ),
           Expanded(
             child: Container(
-              // Subtle dot-grid background like the mockup
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topRight,
@@ -54,7 +66,10 @@ class _MainLayoutState extends State<MainLayout> {
               ),
               child: _selectedIndex == 0
                   ? DashboardScreen(service: widget.service)
-                  : SettingsScreen(service: widget.service),
+                  : SettingsScreen(
+                      service: widget.service,
+                      updateService: _updateService,
+                    ),
             ),
           ),
         ],

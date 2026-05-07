@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
+import '../services/update_service.dart';
 import '../services/ws_service.dart';
 import '../theme.dart';
+import '../widgets/update_modal.dart';
 
 class SettingsScreen extends StatefulWidget {
   final WsService service;
+  final UpdateService updateService;
 
-  const SettingsScreen({super.key, required this.service});
+  const SettingsScreen({
+    super.key,
+    required this.service,
+    required this.updateService,
+  });
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -33,7 +40,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.initState();
     _ipCtrl = TextEditingController(text: widget.service.ip);
     _portCtrl = TextEditingController(text: widget.service.port);
+    widget.updateService.addListener(_onUpdateChanged);
   }
+
+  void _onUpdateChanged() => setState(() {});
 
   @override
   void dispose() {
@@ -42,6 +52,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _slaveCtrl.dispose();
     _timeoutCtrl.dispose();
     _retriesCtrl.dispose();
+    widget.updateService.removeListener(_onUpdateChanged);
     super.dispose();
   }
 
@@ -298,6 +309,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           ),
           const SizedBox(height: 32),
+          // ── Software Updates ──────────────────────────────────────────
+          _SoftwareUpdateCard(updateService: widget.updateService),
+          const SizedBox(height: 32),
           // ── Action bar ────────────────────────────────────────────────
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
@@ -537,6 +551,187 @@ class _SaveButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
         elevation: 0,
+      ),
+    );
+  }
+}
+
+// ── Software Update Card ──────────────────────────────────────────────────────
+
+class _SoftwareUpdateCard extends StatelessWidget {
+  final UpdateService updateService;
+  const _SoftwareUpdateCard({required this.updateService});
+
+  @override
+  Widget build(BuildContext context) {
+    final svc = updateService;
+    final status = svc.status;
+
+    final bool isAvailable = status == UpdateStatus.available;
+    final bool isReady = status == UpdateStatus.readyToRestart;
+    final bool isDownloading = status == UpdateStatus.downloading;
+    final bool isChecking = status == UpdateStatus.checking;
+
+    String statusText;
+    Color statusColor = kOnSurfaceVariant;
+
+    switch (status) {
+      case UpdateStatus.upToDate:
+        statusText = 'Up to date';
+        statusColor = kPrimary;
+      case UpdateStatus.available:
+        statusText = 'v${svc.updateInfo?.version ?? ''} available';
+        statusColor = kPrimary;
+      case UpdateStatus.downloading:
+        statusText = 'Downloading... ${(svc.downloadProgress * 100).toInt()}%';
+      case UpdateStatus.readyToRestart:
+        statusText = 'Ready to install — restart to apply';
+        statusColor = kPrimary;
+      case UpdateStatus.checking:
+        statusText = 'Checking...';
+      case UpdateStatus.error:
+        statusText = 'Check failed';
+        statusColor = kError;
+      case UpdateStatus.idle:
+        statusText = '—';
+    }
+
+    return _GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _CardHeader(
+            icon: Icons.system_update_alt_rounded,
+            title: 'Software Updates',
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              // Version info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _FieldLabel('INSTALLED VERSION'),
+                    const SizedBox(height: 6),
+                    Text(
+                      svc.currentVersion.isEmpty ? '—' : svc.currentVersion,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: kOnSurface,
+                        fontFamily: 'SpaceGrotesk',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 24),
+              // Status
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _FieldLabel('STATUS'),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        if (isChecking || isDownloading)
+                          const SizedBox(
+                            width: 12,
+                            height: 12,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 1.5,
+                              color: kPrimary,
+                            ),
+                          )
+                        else
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: statusColor,
+                            ),
+                          ),
+                        const SizedBox(width: 8),
+                        Text(
+                          statusText,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: statusColor,
+                            fontWeight: (isAvailable || isReady)
+                                ? FontWeight.w600
+                                : FontWeight.w400,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              // Action button
+              const SizedBox(width: 24),
+              if (isReady)
+                ElevatedButton.icon(
+                  onPressed: svc.applyAndRestart,
+                  icon: const Icon(Icons.restart_alt_rounded, size: 16),
+                  label: const Text(
+                    'Restart Now',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kPrimary,
+                    foregroundColor: const Color(0xFF003919),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 14),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(999)),
+                    elevation: 0,
+                  ),
+                )
+              else
+                OutlinedButton.icon(
+                  onPressed: isDownloading || isChecking
+                      ? null
+                      : () => showUpdateModal(context, svc),
+                  icon: Icon(
+                    isAvailable
+                        ? Icons.download_rounded
+                        : Icons.refresh_rounded,
+                    size: 16,
+                  ),
+                  label: Text(
+                    isAvailable ? 'Install Update' : 'Check for Updates',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: isAvailable ? kPrimary : kOnSurface,
+                    side: BorderSide(
+                      color: isAvailable ? kNeonGlowBorder : Colors.white24,
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 14),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(999)),
+                  ),
+                ),
+            ],
+          ),
+          // Download progress bar (visible only while downloading)
+          if (isDownloading) ...[
+            const SizedBox(height: 16),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(999),
+              child: LinearProgressIndicator(
+                value: svc.downloadProgress,
+                minHeight: 4,
+                backgroundColor: kSurfaceVariant,
+                valueColor: const AlwaysStoppedAnimation<Color>(kPrimary),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
