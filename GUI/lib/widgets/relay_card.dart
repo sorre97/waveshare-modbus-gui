@@ -129,7 +129,6 @@ class _RelayCardState extends State<RelayCard> {
           final pad = (h * 0.12).clamp(8.0, 18.0);
           final titleSize = (h * 0.18).clamp(12.0, 20.0);
           final subSize = (h * 0.10).clamp(9.0, 11.0);
-          final loadSize = (h * 0.10).clamp(9.0, 13.0);
           final iconSize = (h * 0.20).clamp(14.0, 24.0);
           final ledSize = (h * 0.09).clamp(6.0, 11.0);
 
@@ -210,20 +209,11 @@ class _RelayCardState extends State<RelayCard> {
                   ],
                 ),
                 const Spacer(),
-                // ── Bottom row: load + toggle ─────────────────────
+                // ── Bottom row: toggle ────────────────────────────
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.end,
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text(
-                      'Load: 0.0A',
-                      style: TextStyle(
-                        fontSize: loadSize,
-                        color: widget.isOn
-                            ? kOnSurfaceVariant
-                            : kOnSurfaceVariant.withValues(alpha: 0.5),
-                      ),
-                    ),
                     RelayToggle(
                       value: widget.isOn,
                       onTap: widget.onToggle,

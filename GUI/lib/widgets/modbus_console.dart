@@ -153,21 +153,7 @@ class _ModbusConsoleState extends State<ModbusConsole> {
                 ),
                 const Spacer(),
                 // Three dots → Save As dialog
-                GestureDetector(
-                  onTap: _exportLog,
-                  child: Tooltip(
-                    message: 'Export log…',
-                    child: Row(
-                      children: [
-                        _dot(kError.withValues(alpha: 0.5)),
-                        const SizedBox(width: 6),
-                        _dot(kSecondary.withValues(alpha: 0.5)),
-                        const SizedBox(width: 6),
-                        _dot(kPrimary.withValues(alpha: 0.5)),
-                      ],
-                    ),
-                  ),
-                ),
+                _ExportButton(onTap: _exportLog),
               ],
             ),
           ),
@@ -253,4 +239,123 @@ class _ModbusConsoleState extends State<ModbusConsole> {
         height: 8,
         decoration: BoxDecoration(shape: BoxShape.circle, color: color),
       );
+}
+
+// ── Export button with hover effect ──────────────────────────────────────────
+
+class _ExportButton extends StatefulWidget {
+  final VoidCallback onTap;
+  const _ExportButton({required this.onTap});
+
+  @override
+  State<_ExportButton> createState() => _ExportButtonState();
+}
+
+class _ExportButtonState extends State<_ExportButton> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: 'Export log…',
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onEnter: (_) => setState(() => _hovered = true),
+        onExit: (_) => setState(() => _hovered = false),
+        child: GestureDetector(
+          onTap: widget.onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(6),
+              color: _hovered
+                  ? Colors.white.withValues(alpha: 0.06)
+                  : Colors.transparent,
+              border: Border.all(
+                color: _hovered ? Colors.white12 : Colors.transparent,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _AnimatedDot(
+                  color: kError,
+                  hovered: _hovered,
+                  delay: Duration.zero,
+                ),
+                const SizedBox(width: 6),
+                _AnimatedDot(
+                  color: kSecondary,
+                  hovered: _hovered,
+                  delay: const Duration(milliseconds: 40),
+                ),
+                const SizedBox(width: 6),
+                _AnimatedDot(
+                  color: kPrimary,
+                  hovered: _hovered,
+                  delay: const Duration(milliseconds: 80),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AnimatedDot extends StatefulWidget {
+  final Color color;
+  final bool hovered;
+  final Duration delay;
+
+  const _AnimatedDot({
+    required this.color,
+    required this.hovered,
+    required this.delay,
+  });
+
+  @override
+  State<_AnimatedDot> createState() => _AnimatedDotState();
+}
+
+class _AnimatedDotState extends State<_AnimatedDot> {
+  bool _visible = false;
+
+  @override
+  void didUpdateWidget(_AnimatedDot oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.hovered != widget.hovered) {
+      if (widget.hovered) {
+        Future.delayed(widget.delay, () {
+          if (mounted) setState(() => _visible = true);
+        });
+      } else {
+        setState(() => _visible = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 150),
+      width: _visible ? 10 : 8,
+      height: _visible ? 10 : 8,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: widget.color.withValues(alpha: _visible ? 1.0 : 0.45),
+        boxShadow: _visible
+            ? [
+                BoxShadow(
+                  color: widget.color.withValues(alpha: 0.5),
+                  blurRadius: 6,
+                  spreadRadius: 1,
+                ),
+              ]
+            : [],
+      ),
+    );
+  }
 }
